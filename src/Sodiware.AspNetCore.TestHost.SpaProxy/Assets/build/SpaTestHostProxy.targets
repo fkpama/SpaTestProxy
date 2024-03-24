@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+		<Target Name="GetProjectReferenceTargetPathsForSpaProxy"
+						Condition="'$(DesignTimeBuild)'!='true' AND '@(_MSBuildProjectReferenceExistent)' != ''">
+				<MSBuild Projects="@(_MSBuildProjectReferenceExistent)"
+								 Targets="GetTargetPath">
+						<Output TaskParameter="TargetOutputs" ItemName="_SpaProxyProjectReferenceDirectories" />
+				</MSBuild>
+
+				<ItemGroup>
+						<_SpaProxyTargetDirs Include="%(_SpaProxyProjectReferenceDirectories.FileName)%(_SpaProxyProjectReferenceDirectories.Extension)"
+																 ConfigLine="&quot;%(_SpaProxyProjectReferenceDirectories.FileName)%(_SpaProxyProjectReferenceDirectories.Extension)&quot;: &quot;$([System.IO.Path]::GetDirectoryName(%(_SpaProxyProjectReferenceDirectories.MSBuildSourceProjectFile)))&quot;"
+																 />
+
+				</ItemGroup>
+
+				<PropertyGroup>
+						<_SpaProxyConfigLinesConfigText>@(_SpaProxyTargetDirs->'%(ConfigLine)', ', ')</_SpaProxyConfigLinesConfigText>
+						<_SpaProxyConfigLinesConfigText Condition="'$(_SpaProxyConfigLinesConfigText)'!=''">&quot;Projects&quot;: { $(_SpaProxyConfigLinesConfigText.Replace('\', '\\').Trim()) }</_SpaProxyConfigLinesConfigText>
+				</PropertyGroup>
+
+				<ItemGroup>
+						<_SpaProxyConfigLines Include="$(_SpaProxyConfigLinesConfigText)" />
+						<_SpaProxyConfigLines Condition="'$(SpaRoot)'!=''" Include="&quot;SpaRoot&quot;: &quot;$(SpaRoot.Replace('\', '\\'))&quot;" />
+				</ItemGroup>
+		</Target>
+		<Target Name="WriteSpaProxyConfig"
+						Condition="'@(_SpaProxyConfigLines)'!='' AND '$(DesignTimeBuild)'!='true'"
+						>
+
+				<PropertyGroup>
+						<_SpaProxyConfigText>{ @(_SpaProxyConfigLines->'%(Identity)', ', ') }</_SpaProxyConfigText>
+				</PropertyGroup>
+				<ItemGroup>
+						<_SpaProxyConfigFilePath Include="$(IntermediateOutputPath)spatesthostconfig.json" />
+						<_SpaProxyConfigFilePath Update="@(_SpaProxyConfigFilePath)"
+																		 TargetPath="%(Filename)%(Extension)"
+																		 CopyToOutputDirectory="Always"
+																		 />
+				</ItemGroup>
+				<WriteLinesToFile File="@(_SpaProxyConfigFilePath)"
+													Lines="$(_SpaProxyConfigText)"
+													Overwrite="true"
+													/>
+				<ItemGroup>
+						<ContentWithTargetPath Include="@(_SpaProxyConfigFilePath)" />
+						<FileWrites Include="@(_SpaProxyConfigFilePath)" />
+				</ItemGroup>
+		</Target>
+
+		<PropertyGroup>
+				<GenerateSpaProxyConfigDependsOn>
+					$(GenerateSpaProxyConfigDependsOn);
+					GetProjectReferenceTargetPathsForSpaProxy;
+					WriteSpaProxyConfig
+				</GenerateSpaProxyConfigDependsOn>
+		</PropertyGroup>
+		<Target Name="GenerateSpaProxyConfig"
+						DependsOnTargets="$(GenerateSpaProxyConfigDependsOn)"
+						BeforeTargets="CopyFilesToOutputDirectory;GetCopyToOutputDirectoryItems"
+						/>
+</Project>

@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net8.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.2" />
+		<PackageReference Include="HttpMachine.PCL" Version="*" />
+		<PackageReference Include="Sodiware.Core" Version="*" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="Assets/**/*.props;Assets/**/*.targets"
+			  Pack="true"
+			  PackagePath="%(RecursiveDir)%(FileName)%(Extension)" />
+	</ItemGroup>
+</Project>
